@@ -1,98 +1,55 @@
 # iML 26/27 – Exercise 1: Quantifying Interpretability
 
-Template repository for the bonus task. **Fork this repository**, replace the example with your own
-work, and add the PDF of your presentation. **You are expected to rewrite this README as well**: by
-the deadline it should describe your approach, how to reproduce your results, and contain your own
-[AI statement](#ai-statement).
+## My Approach: Interpretability Complexity Score (ICS)
+To quantify model interpretability, I developed the **Interpretability Complexity Score (ICS)**. For inherently interpretable models like Decision Trees, interpretability is inversely proportional to the model's structural complexity and the cognitive load required for a human to comprehend and simulate it.
 
-> **Deadline: Sunday, November 15th, 2026, 23:59.** Your code and presentation must be submitted by then.
+The ICS is calculated using the following formula:
+`ICS = (alpha * Total Nodes) + (beta * Maximum Depth) + (gamma * Unique Features Used)`
+*(Where alpha=1.0, beta=2.0, and gamma=5.0)*
 
-## Tasks
+For ensembles (like Random Forests), the score is the sum of the ICS of all individual trees in the ensemble. A **lower ICS** indicates a **more interpretable** model. 
 
-### Task 1 (1  point): An interpretability metric
+### Task 1 Findings: The Threshold of Interpretability
+I evaluated this metric on the Titanic dataset across single Decision Trees of varying depths and Random Forests of varying sizes. 
 
-Develop a metric that quantifies model interpretability. It has to work within one model class,
-e.g. for decision trees, random forests and gradient-boosted trees. Then evaluate a few
-inherently interpretable models and/or datasets and investigate the *threshold of
-interpretability*: at what point does a model stop being interpretable?
+My results were as follows:
+- **Tree (Depth 2)**: Accuracy 77.1%, ICS 26.0
+- **Tree (Depth 5)**: Accuracy 79.8%, ICS 91.0
+- **Tree (Unrestricted)**: Accuracy 75.3%, ICS 535.0
+- **Forest (3 Trees)**: Accuracy 81.0%, ICS 133.0
+- **Forest (10 Trees)**: Accuracy 81.4%, ICS 1002.0
+- **Forest (50 Trees)**: Accuracy 77.7%, ICS 25552.0
 
-- A trivial idea would be the *number of features used*. Your metric should go beyond that.
-- We will check that you did not simply copy someone else's interpretability metric.
-- You may use an LLM-based metric. In that case you have to provide evidence that its scores
-  agree with human judgments.
+**Conclusion on the Threshold:** The "threshold of interpretability" is clearly crossed when moving from bounded trees to ensembles. While a human can mentally trace a depth-5 tree (ICS 91.0), a 10-tree forest (ICS 1002.0) crosses the threshold of human working memory entirely, despite only providing a marginal ~1.5% gain in accuracy over the single depth-5 tree. By 50 trees, the ICS explodes to over 25,000, completely eliminating interpretability.
 
-### Task 2 (2 bonus points): Meta-features and interpretability
+### Task 2 Findings: Meta-Features and Interpretability
+To understand how dataset meta-features impact model interpretability, I trained unrestricted Decision Trees on three datasets with varying complexity:
+- **Iris:** 150 Samples, 4 Features, 33.3% Majority Class ➔ ICS: 46.0
+- **Wine:** 178 Samples, 13 Features, 39.9% Majority Class ➔ ICS: 46.0
+- **Breast Cancer:** 569 Samples, 30 Features, 62.7% Majority Class ➔ ICS: 95.0
 
-Find connections between a dataset's meta-features (e.g. number of samples, number of features,
-class balance, …) and the interpretability, measured with your metric from Task 1, of several
-inherently interpretable models. This repository has no code for Task 2. Structure it as you see fit.
+**Conclusion:** The data suggests that dataset complexity generally degrades model interpretability, though it is heavily confounded by class separability. Interestingly, the model achieved the exact same complexity on the Wine dataset as the Iris dataset, despite having 3x the features. This indicates the tree found highly efficient splits using only a small subset of features. However, a significant jump in samples, features, and class imbalance (Breast Cancer) forced the tree to grow significantly deeper and wider to achieve node purity.
 
-### Presentation
 
-Prepare a **5-minute presentation** of your metric and results across models and datasets (and, if
-applicable, your Task 2 findings). Commit it as [`presentation/presentation.pdf`](presentation/).
-
-## Setup
-
-The repository is an installable Python package. We recommend [uv](https://docs.astral.sh/uv/):
+## How to Reproduce
+To reproduce these results, set up the virtual environment:
 
 ```bash
-uv sync --extra dev
-uv run pytest
-uv run python scripts/run_experiment.py
-```
-
-With plain pip:
-
-```bash
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-The first run downloads the Titanic dataset from OpenML and caches it in `data/` (relative to the
-directory you run from). You may use that dataset, but dont you want to rather look at something existing?
-
-## Repository structure
-
-```
-iml_interpretability/
-├── data.py        # Dataset container + load_titanic(); add your own datasets here
-├── models.py      # get_models(): the models you compare (example: one decision tree)
-├── metric.py      # InterpretabilityMetric base class + RelativeNumberOfLeaves (example)
-└── evaluate.py    # evaluate(): fits all models on all datasets and computes all metrics
-scripts/
-└── run_experiment.py   # runs evaluate() and writes results/scores.csv
-tests/                  # pytest tests
-presentation/           # put presentation.pdf here
+Run Task 1 (Titanic evaluation):
+```bash
+python scripts/run_experiment.py
 ```
 
-The repository runs end to end on a minimal example: a single scikit-learn decision tree on
-Titanic, scored by its number of leaves relative to the maximum possible for its depth (`RelativeNumberOfLeaves` in
-[`iml_interpretability/metric.py`](iml_interpretability/metric.py)). Replace this example with your
-own metric, models and datasets. You are free to restructure everything, as long as the package
-stays installable and your results stay reproducible from the scripts in this repository.
+Run Task 2 (Meta-features evaluation):
+```bash
+python scripts/run_task2.py
+```
 
-## Code style
+# AI Statement
 
-Please keep your code clean and consistent. We recommend [ruff](https://docs.astral.sh/ruff/) as
-linter and formatter. A configuration is already included in `pyproject.toml`:
-
-## Submission
-
-- Submit your code and presentation by **Sunday, November 15th, 2026, 23:59**.
-- Your fork contains your code, the scripts that reproduce your results, and
-  `presentation/presentation.pdf`.
-- **Rewrite this README.** Replace the template text with a short description of your approach and
-  how to reproduce your results.
-- **Mandatory:** replace the [AI statement](#ai-statement) below with your own, stating how you
-  used AI tools (or that you did not use any).
-
-## AI statement
-
-> **Mandatory.** Replace this example with your own: which AI tools you used, for what, and how you
-> checked their output (or that you used none).
-
-*Example:* I created this repository with Claude Code (Claude Opus 5.5). After clarifying the scope
-with it, it generated the code, tests and README based on my own projects as style references. I
-reviewed and edited the result and checked that it runs. I take full responsibility for and
-ownership of the content of this repository.
+I used Gemini as an AI assistant for this exercise. I used it to help brainstorm the cognitive metrics for the ICS formula, troubleshoot Python package installation and SSL certificate verification errors on my local macOS environment, and structure the code to efficiently extract tree attributes (nodes, depth, features) from scikit-learn's underlying structures. I reviewed all generated code, tested it locally to ensure it ran successfully, and take full responsibility for the content of this repository.

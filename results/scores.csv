@@ -1,0 +1,7 @@
+dataset,model,accuracy,ics_score
+titanic,Tree (Depth 2),0.7713414634146342,26.0
+titanic,Tree (Depth 5),0.7987804878048781,91.0
+titanic,Tree (Unrestricted),0.7530487804878049,535.0
+titanic,Forest (3 Trees),0.8109756097560976,133.0
+titanic,Forest (10 Trees),0.8140243902439024,1002.0
+titanic,Forest (50 Trees),0.7774390243902439,25552.0
